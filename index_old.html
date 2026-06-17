@@ -1,0 +1,98 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  </head>
+  <body>
+    <a-scene
+      mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.0001;
+  filterBeta: 0.001;
+  warmupTolerance: 5;
+  missTolerance: 5"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+    >
+      <a-assets>
+        <video
+          id="poster-gdvc"
+          src="./bi_annual_video_gdvc.mp4"
+          loop
+          muted
+          playsinline
+          webkit-playsinline
+          crossorigin="anonymous"
+          preload="auto"
+        ></video>
+        <video
+          id="poster-arc"
+          src="./bi_annual_video_architecture.mp4"
+          loop
+          muted
+          playsinline
+          webkit-playsinline
+          crossorigin="anonymous"
+          preload="auto"
+        ></video>
+        <video
+          id="poster-int"
+          src="./bi_annual_video_interior.mp4"
+          loop
+          muted
+          playsinline
+          webkit-playsinline
+          crossorigin="anonymous"
+          preload="auto"
+        ></video>
+      </a-assets>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      <a-entity
+        mindar-image-target="targetIndex: 0"
+        play-video="src: #poster-arc"
+      >
+        <a-video
+          src="#poster-arc"
+          position="0 0 0"
+          height="1"
+          width="1"
+          rotation="0 0 0"
+        ></a-video>
+      </a-entity>
+      <a-entity
+        mindar-image-target="targetIndex: 1"
+        play-video="src: #poster-arc"
+      >
+        <a-video
+          src="#poster-arc"
+          position="0 0 0"
+          height="1.45"
+          width="1"
+          rotation="0 0 0"
+        ></a-video>
+      </a-entity>
+      <a-entity
+        mindar-image-target="targetIndex: 2"
+        play-video="src: #poster-gdvc"
+      >
+        <a-video
+          src="#poster-gdvc"
+          position="0 0 0"
+          height="1.5"
+          width="1"
+          rotation="0 0 0"
+        ></a-video>
+      </a-entity>
+    </a-scene>
+    <script>
+      AFRAME.registerComponent("play-video", {
+        schema: { src: { type: "string" } },
+        init: function () {
+          const video = document.querySelector(this.data.src);
+          this.el.addEventListener("targetFound", () => video.play());
+          this.el.addEventListener("targetLost", () => video.pause());
+        },
+      });
+    </script>
+  </body>
+</html>
