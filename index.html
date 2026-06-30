@@ -54,7 +54,7 @@
   <body>
     <div id="ar-app">
       <a-scene
-        mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.0001; filterBeta: 0.001; warmupTolerance: 5; missTolerance: 5"
+        mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.001; filterBeta: 10; warmupTolerance: 5; missTolerance: 5"
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false"
         embedded
@@ -78,6 +78,7 @@
         <a-entity
           mindar-image-target="targetIndex: 0"
           play-video="src: #margit"
+          smooth-transform="lerpFactor: 0.15"
         >
           <a-video
             src="#margit"
@@ -100,74 +101,56 @@
         },
       });
 
-      /* ---- Aggressive resize fix ---- */
-      const scene = document.querySelector("a-scene");
-      const canvas = () => scene.querySelector("canvas");
-      const wrapper = document.getElementById("ar-app");
+      // Vlastný smoothing — lerp medzi aktuálnou a cieľovou pozíciou
+      AFRAME.registerComponent("smooth-transform", {
+        schema: {
+          lerpFactor: { type: "number", default: 0.15 }, // 0.1 = hladké, 0.3 = responzívne
+        },
+        init: function () {
+          this.targetPosition = new THREE.Vector3();
+          this.targetRotation = new THREE.Euler();
+          this.currentPosition = new THREE.Vector3();
+          this.currentRotation = new THREE.Euler();
+          this.smoothing = false;
+        },
+        tick: function () {
+          const el = this.el;
+          const object3D = el.object3D;
 
-      const forceResize = () => {
-        // 1. A-Frame scene resize
-        if (scene.resize) scene.resize();
+          // Len keď je target nájdený
+          if (!this.smoothing) return;
 
-        // 2. Priamo na canvas — vynúť veľkosť
-        const c = canvas();
-        if (c) {
-          const w = wrapper.clientWidth;
-          const h = wrapper.clientHeight;
-          c.style.width = w + "px";
-          c.style.height = h + "px";
-          // Re-render
-          if (scene.object3D && scene.renderer) {
-            scene.renderer.setSize(w, h, false);
-            if (scene.camera) {
-              scene.camera.aspect = w / h;
-              scene.camera.updateProjectionMatrix();
-            }
-          }
-        }
+          // Ulož cieľovú pozíciu/rotáciu z MindAR
+          this.targetPosition.copy(object3D.position);
+          this.targetRotation.copy(object3D.rotation);
 
-        // 3. MindAR container
-        const container = document.getElementById("mindar-ar-container");
-        if (container) {
-          const v = container.querySelector("video");
-          if (v) {
-            v.style.width = "100%";
-            v.style.height = "100%";
-            v.style.objectFit = "cover";
-          }
-        }
-      };
+          // Lerp — plynulý prechod medzi aktuálnou a cieľovou pozíciou
+          this.currentPosition.lerp(this.targetPosition, this.data.lerpFactor);
 
-      // Polling — kontroluje každých 100ms, kým je canvas malý
-      const poll = setInterval(() => {
-        const c = canvas();
-        const w = wrapper.clientWidth;
-        const h = wrapper.clientHeight;
-        if (c && (c.clientWidth !== w || c.clientHeight !== h)) {
-          forceResize();
-        }
-      }, 100);
+          // Rotácia — lerp cez kvaternióny (správne pre uhly)
+          this.currentQuat = this.currentQuat || new THREE.Quaternion();
+          this.targetQuat = this.targetQuat || new THREE.Quaternion();
+          this.currentQuat.setFromEuler(this.currentRotation);
+          this.targetQuat.setFromEuler(this.targetRotation);
+          this.currentQuat.slerp(this.targetQuat, this.data.lerpFactor);
+          this.currentRotation.setFromQuaternion(this.currentQuat);
 
-      // Zastav polling po 15 sekundách (scéna by mala byť stabilná)
-      setTimeout(() => clearInterval(poll), 15000);
-
-      // Po načítaní scény ešte raz
-      scene.addEventListener("loaded", () => {
-        forceResize();
-        setTimeout(forceResize, 100);
-        setTimeout(forceResize, 500);
-        // Polling môžeme zastaviť
-        setTimeout(() => clearInterval(poll), 2000);
+          // Aplikuj vyhladenú transformáciu
+          object3D.position.copy(this.currentPosition);
+          object3D.rotation.copy(this.currentRotation);
+        },
+        events: {
+          targetFound: function () {
+            this.smoothing = true;
+            // Inicializuj na aktuálnu pozíciu (žiadny skok na začiatku)
+            this.currentPosition.copy(this.el.object3D.position);
+            this.currentRotation.copy(this.el.object3D.rotation);
+          },
+          targetLost: function () {
+            this.smoothing = false;
+          },
+        },
       });
-
-      // Pri zmene viewportu
-      window.addEventListener("resize", forceResize);
-      window.addEventListener("orientationchange", () => {
-        setTimeout(forceResize, 250);
-      });
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener("resize", forceResize);
-      }
     </script>
   </body>
 </html>
