@@ -100,28 +100,71 @@
         },
       });
 
-      /* ---- Resize fix ---- */
+      /* ---- Aggressive resize fix ---- */
       const scene = document.querySelector("a-scene");
+      const canvas = () => scene.querySelector("canvas");
+      const wrapper = document.getElementById("ar-app");
+
       const forceResize = () => {
-        if (scene && scene.resize) {
-          scene.resize();
+        // 1. A-Frame scene resize
+        if (scene.resize) scene.resize();
+
+        // 2. Priamo na canvas — vynúť veľkosť
+        const c = canvas();
+        if (c) {
+          const w = wrapper.clientWidth;
+          const h = wrapper.clientHeight;
+          c.style.width = w + "px";
+          c.style.height = h + "px";
+          // Re-render
+          if (scene.object3D && scene.renderer) {
+            scene.renderer.setSize(w, h, false);
+            if (scene.camera) {
+              scene.camera.aspect = w / h;
+              scene.camera.updateProjectionMatrix();
+            }
+          }
+        }
+
+        // 3. MindAR container
+        const container = document.getElementById("mindar-ar-container");
+        if (container) {
+          const v = container.querySelector("video");
+          if (v) {
+            v.style.width = "100%";
+            v.style.height = "100%";
+            v.style.objectFit = "cover";
+          }
         }
       };
 
-      // Po načítaní scény
+      // Polling — kontroluje každých 100ms, kým je canvas malý
+      const poll = setInterval(() => {
+        const c = canvas();
+        const w = wrapper.clientWidth;
+        const h = wrapper.clientHeight;
+        if (c && (c.clientWidth !== w || c.clientHeight !== h)) {
+          forceResize();
+        }
+      }, 100);
+
+      // Zastav polling po 15 sekundách (scéna by mala byť stabilná)
+      setTimeout(() => clearInterval(poll), 15000);
+
+      // Po načítaní scény ešte raz
       scene.addEventListener("loaded", () => {
         forceResize();
-        // ešte jedno oneskorenie — niektoré zariadenia potrebujú extra cyklus
-        setTimeout(forceResize, 300);
+        setTimeout(forceResize, 100);
+        setTimeout(forceResize, 500);
+        // Polling môžeme zastaviť
+        setTimeout(() => clearInterval(poll), 2000);
       });
 
-      // Pri zmene orientácie / viewportu (address bar show/hide)
+      // Pri zmene viewportu
       window.addEventListener("resize", forceResize);
       window.addEventListener("orientationchange", () => {
         setTimeout(forceResize, 250);
       });
-
-      // Visual Viewport API — zachytí mobile address bar zmeny
       if (window.visualViewport) {
         window.visualViewport.addEventListener("resize", forceResize);
       }
