@@ -1,53 +1,12 @@
 <!doctype html>
 <html>
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-  </head>
-  <body>
-    <a-scene
-      mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.0001; filterBeta: 0.001; warmupTolerance: 5; missTolerance: 5"
-      vr-mode-ui="enabled: false"
-      device-orientation-permission-ui="enabled: false"
-    >
-      <a-assets>
-        <video
-          id="margit"
-          src="./margit.mp4"
-          loop
-          muted
-          playsinline
-          webkit-playsinline
-          crossorigin="anonymous"
-          preload="auto"
-        ></video>
-      </a-assets>
-
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity mindar-image-target="targetIndex: 0" play-video="src: #margit">
-        <a-video
-          src="#margit"
-          position="0 0 0"
-          height="1.45"
-          width="1"
-          rotation="0 0 0"
-        ></a-video>
-      </a-entity>
-    </a-scene>
-
-    <script>
-      AFRAME.registerComponent("play-video", {
-        schema: { src: { type: "string" } },
-        init: function () {
-          const video = document.querySelector(this.data.src);
-          this.el.addEventListener("targetFound", () => video.play());
-          this.el.addEventListener("targetLost", () => video.pause());
-        },
-      });
-    </script>
-
     <style>
       * {
         margin: 0;
@@ -60,16 +19,29 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-      }
-
-      a-scene {
-        width: 100%;
-        height: 100%;
         position: fixed;
         top: 0;
         left: 0;
       }
-      /* MindAR internal elements */
+
+      /* Fullscreen wrapper — jediný source of truth pre veľkosť */
+      #ar-app {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh; /* dynamic viewport height — fix pre mobile address bar */
+      }
+
+      /* A-Scene inherituje veľkosť od wrappera */
+      #ar-app a-scene,
+      #ar-app a-scene canvas {
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      /* MindAR internal container + video feed */
       #mindar-ar-container,
       #mindar-ar-container video,
       #mindar-ar-container canvas {
@@ -78,5 +50,81 @@
         object-fit: cover !important;
       }
     </style>
+  </head>
+  <body>
+    <div id="ar-app">
+      <a-scene
+        mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.0001; filterBeta: 0.001; warmupTolerance: 5; missTolerance: 5"
+        vr-mode-ui="enabled: false"
+        device-orientation-permission-ui="enabled: false"
+        embedded
+        renderer="antialias: true; alpha: true; logarithmicDepthBuffer: true;"
+      >
+        <a-assets>
+          <video
+            id="margit"
+            src="./margit.mp4"
+            loop
+            muted
+            playsinline
+            webkit-playsinline
+            crossorigin="anonymous"
+            preload="auto"
+          ></video>
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+        <a-entity
+          mindar-image-target="targetIndex: 0"
+          play-video="src: #margit"
+        >
+          <a-video
+            src="#margit"
+            position="0 0 0"
+            height="1.45"
+            width="1"
+            rotation="0 0 0"
+          ></a-video>
+        </a-entity>
+      </a-scene>
+    </div>
+
+    <script>
+      AFRAME.registerComponent("play-video", {
+        schema: { src: { type: "string" } },
+        init: function () {
+          const video = document.querySelector(this.data.src);
+          this.el.addEventListener("targetFound", () => video.play());
+          this.el.addEventListener("targetLost", () => video.pause());
+        },
+      });
+
+      /* ---- Resize fix ---- */
+      const scene = document.querySelector("a-scene");
+      const forceResize = () => {
+        if (scene && scene.resize) {
+          scene.resize();
+        }
+      };
+
+      // Po načítaní scény
+      scene.addEventListener("loaded", () => {
+        forceResize();
+        // ešte jedno oneskorenie — niektoré zariadenia potrebujú extra cyklus
+        setTimeout(forceResize, 300);
+      });
+
+      // Pri zmene orientácie / viewportu (address bar show/hide)
+      window.addEventListener("resize", forceResize);
+      window.addEventListener("orientationchange", () => {
+        setTimeout(forceResize, 250);
+      });
+
+      // Visual Viewport API — zachytí mobile address bar zmeny
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", forceResize);
+      }
+    </script>
   </body>
 </html>
