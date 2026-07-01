@@ -54,7 +54,7 @@
   <body>
     <div id="ar-app">
       <a-scene
-        mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.01; filterBeta: 1000; warmupTolerance: 5; missTolerance: 5"
+        mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.001; filterBeta: 1000; warmupTolerance: 5; missTolerance: 5"
         device-orientation-permission-ui="enabled: false"
         embedded
         renderer="antialias: true; alpha: true; logarithmicDepthBuffer: true;"
@@ -124,11 +124,7 @@
 
         <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-        <a-entity
-          mindar-image-target="targetIndex: 0"
-          play-video="src: #anika"
-          smooth-transform="lerpFactor: 0.1"
-        >
+        <a-entity mindar-image-target="targetIndex: 0" play-video="src: #anika">
           <a-video
             src="#anika"
             position="0 0 0"
@@ -140,7 +136,6 @@
         <a-entity
           mindar-image-target="targetIndex: 1"
           play-video="src: #cheyenne"
-          smooth-transform="lerpFactor: 0.1"
         >
           <a-video
             src="#cheyenne"
@@ -150,11 +145,7 @@
             rotation="0 0 0"
           ></a-video>
         </a-entity>
-        <a-entity
-          mindar-image-target="targetIndex: 3"
-          play-video="src: #mia"
-          smooth-transform="lerpFactor: 0.1"
-        >
+        <a-entity mindar-image-target="targetIndex: 3" play-video="src: #mia">
           <a-video
             src="#mia"
             position="0 0 0"
@@ -163,11 +154,7 @@
             rotation="0 0 0"
           ></a-video>
         </a-entity>
-        <a-entity
-          mindar-image-target="targetIndex: 4"
-          play-video="src: #paolo"
-          smooth-transform="lerpFactor: 0.1"
-        >
+        <a-entity mindar-image-target="targetIndex: 4" play-video="src: #paolo">
           <a-video
             src="#paolo"
             position="0 0 0"
@@ -179,7 +166,6 @@
         <a-entity
           mindar-image-target="targetIndex: 5"
           play-video="src: #sofia_c"
-          smooth-transform="lerpFactor: 0.1"
         >
           <a-video
             src="#sofia_c"
@@ -192,7 +178,6 @@
         <a-entity
           mindar-image-target="targetIndex: 6"
           play-video="src: #sofia_q"
-          smooth-transform="lerpFactor: 0.1"
         >
           <a-video
             src="#sofia_q"
