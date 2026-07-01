@@ -54,7 +54,7 @@
   <body>
     <div id="ar-app">
       <a-scene
-        mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.001; filterBeta: 10; warmupTolerance: 5; missTolerance: 5"
+        mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.001; filterBeta: 1000; warmupTolerance: 5; missTolerance: 5"
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false"
         embedded
@@ -128,7 +128,7 @@
         <a-entity
           mindar-image-target="targetIndex: 0"
           play-video="src: #anika"
-          smooth-transform="lerpFactor: 0.15"
+          smooth-transform="lerpFactor: 0.1"
         >
           <a-video
             src="#anika"
@@ -141,7 +141,7 @@
         <a-entity
           mindar-image-target="targetIndex: 1"
           play-video="src: #cheyenne"
-          smooth-transform="lerpFactor: 0.15"
+          smooth-transform="lerpFactor: 0.1"
         >
           <a-video
             src="#cheyenne"
@@ -154,7 +154,7 @@
         <a-entity
           mindar-image-target="targetIndex: 3"
           play-video="src: #mia"
-          smooth-transform="lerpFactor: 0.15"
+          smooth-transform="lerpFactor: 0.1"
         >
           <a-video
             src="#mia"
@@ -167,7 +167,7 @@
         <a-entity
           mindar-image-target="targetIndex: 4"
           play-video="src: #paolo"
-          smooth-transform="lerpFactor: 0.15"
+          smooth-transform="lerpFactor: 0.1"
         >
           <a-video
             src="#paolo"
@@ -180,7 +180,7 @@
         <a-entity
           mindar-image-target="targetIndex: 5"
           play-video="src: #sofia_c"
-          smooth-transform="lerpFactor: 0.15"
+          smooth-transform="lerpFactor: 0.1"
         >
           <a-video
             src="#sofia_c"
@@ -193,7 +193,7 @@
         <a-entity
           mindar-image-target="targetIndex: 6"
           play-video="src: #sofia_q"
-          smooth-transform="lerpFactor: 0.15"
+          smooth-transform="lerpFactor: 0.1"
         >
           <a-video
             src="#sofia_q"
