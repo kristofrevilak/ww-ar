@@ -54,7 +54,10 @@
   <body>
     <div id="ar-app">
       <a-scene
-        mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.001; filterBeta: 1000; warmupTolerance: 5; missTolerance: 5"
+        mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.0001;
+  filterBeta: 0.001;
+  warmupTolerance: 5;
+  missTolerance: 5"
         device-orientation-permission-ui="enabled: false"
         embedded
         renderer="antialias: true; alpha: true; logarithmicDepthBuffer: true;"
@@ -197,65 +200,6 @@
           const video = document.querySelector(this.data.src);
           this.el.addEventListener("targetFound", () => video.play());
           this.el.addEventListener("targetLost", () => video.pause());
-        },
-      });
-
-      // Vlastný smoothing — lerp medzi aktuálnou a cieľovou pozíciou
-      AFRAME.registerComponent("smooth-transform", {
-        schema: {
-          lerpFactor: { type: "number", default: 0.1 },
-        },
-        init: function () {
-          this.targetPosition = new THREE.Vector3();
-          this.targetRotation = new THREE.Euler();
-          this.targetScale = new THREE.Vector3();
-
-          this.currentPosition = new THREE.Vector3();
-          this.currentRotation = new THREE.Euler();
-          this.currentScale = new THREE.Vector3();
-
-          this.currentQuat = new THREE.Quaternion();
-          this.targetQuat = new THREE.Quaternion();
-
-          this.smoothing = false;
-        },
-        tick: function () {
-          if (!this.smoothing) return;
-
-          const object3D = this.el.object3D;
-
-          // Ulož cieľové hodnoty z MindAR
-          this.targetPosition.copy(object3D.position);
-          this.targetRotation.copy(object3D.rotation);
-          this.targetScale.copy(object3D.scale);
-
-          // Lerp pozíciu
-          this.currentPosition.lerp(this.targetPosition, this.data.lerpFactor);
-
-          // Slerp rotáciu cez kvaternióny
-          this.currentQuat.setFromEuler(this.currentRotation);
-          this.targetQuat.setFromEuler(this.targetRotation);
-          this.currentQuat.slerp(this.targetQuat, this.data.lerpFactor);
-          this.currentRotation.setFromQuaternion(this.currentQuat);
-
-          // Lerp scale — TOTO CHÝBALO
-          this.currentScale.lerp(this.targetScale, this.data.lerpFactor);
-
-          // Aplikuj vyhladené hodnoty
-          object3D.position.copy(this.currentPosition);
-          object3D.rotation.copy(this.currentRotation);
-          object3D.scale.copy(this.currentScale);
-        },
-        events: {
-          targetFound: function () {
-            this.smoothing = true;
-            this.currentPosition.copy(this.el.object3D.position);
-            this.currentRotation.copy(this.el.object3D.rotation);
-            this.currentScale.copy(this.el.object3D.scale);
-          },
-          targetLost: function () {
-            this.smoothing = false;
-          },
         },
       });
     </script>
