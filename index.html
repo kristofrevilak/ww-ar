@@ -54,8 +54,7 @@
   <body>
     <div id="ar-app">
       <a-scene
-        mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.001; filterBeta: 1000; warmupTolerance: 5; missTolerance: 5"
-        vr-mode-ui="enabled: false"
+        mindar-image="imageTargetSrc: ./targets.mind; uiLoading:no; uiScanning:no; filterMinCF: 0.01; filterBeta: 1000; warmupTolerance: 5; missTolerance: 5"
         device-orientation-permission-ui="enabled: false"
         embedded
         renderer="antialias: true; alpha: true; logarithmicDepthBuffer: true;"
@@ -219,47 +218,55 @@
       // Vlastný smoothing — lerp medzi aktuálnou a cieľovou pozíciou
       AFRAME.registerComponent("smooth-transform", {
         schema: {
-          lerpFactor: { type: "number", default: 0.15 }, // 0.1 = hladké, 0.3 = responzívne
+          lerpFactor: { type: "number", default: 0.1 },
         },
         init: function () {
           this.targetPosition = new THREE.Vector3();
           this.targetRotation = new THREE.Euler();
+          this.targetScale = new THREE.Vector3();
+
           this.currentPosition = new THREE.Vector3();
           this.currentRotation = new THREE.Euler();
+          this.currentScale = new THREE.Vector3();
+
+          this.currentQuat = new THREE.Quaternion();
+          this.targetQuat = new THREE.Quaternion();
+
           this.smoothing = false;
         },
         tick: function () {
-          const el = this.el;
-          const object3D = el.object3D;
-
-          // Len keď je target nájdený
           if (!this.smoothing) return;
 
-          // Ulož cieľovú pozíciu/rotáciu z MindAR
+          const object3D = this.el.object3D;
+
+          // Ulož cieľové hodnoty z MindAR
           this.targetPosition.copy(object3D.position);
           this.targetRotation.copy(object3D.rotation);
+          this.targetScale.copy(object3D.scale);
 
-          // Lerp — plynulý prechod medzi aktuálnou a cieľovou pozíciou
+          // Lerp pozíciu
           this.currentPosition.lerp(this.targetPosition, this.data.lerpFactor);
 
-          // Rotácia — lerp cez kvaternióny (správne pre uhly)
-          this.currentQuat = this.currentQuat || new THREE.Quaternion();
-          this.targetQuat = this.targetQuat || new THREE.Quaternion();
+          // Slerp rotáciu cez kvaternióny
           this.currentQuat.setFromEuler(this.currentRotation);
           this.targetQuat.setFromEuler(this.targetRotation);
           this.currentQuat.slerp(this.targetQuat, this.data.lerpFactor);
           this.currentRotation.setFromQuaternion(this.currentQuat);
 
-          // Aplikuj vyhladenú transformáciu
+          // Lerp scale — TOTO CHÝBALO
+          this.currentScale.lerp(this.targetScale, this.data.lerpFactor);
+
+          // Aplikuj vyhladené hodnoty
           object3D.position.copy(this.currentPosition);
           object3D.rotation.copy(this.currentRotation);
+          object3D.scale.copy(this.currentScale);
         },
         events: {
           targetFound: function () {
             this.smoothing = true;
-            // Inicializuj na aktuálnu pozíciu (žiadny skok na začiatku)
             this.currentPosition.copy(this.el.object3D.position);
             this.currentRotation.copy(this.el.object3D.rotation);
+            this.currentScale.copy(this.el.object3D.scale);
           },
           targetLost: function () {
             this.smoothing = false;
